@@ -1,0 +1,34 @@
+name: Sync Workflows with Workistrator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - workflow-templates/**
+      - .github/workflows/workistrator.yml
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Report what would change without committing to child repos
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workistrator
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # No v1 tag exists upstream yet, so track main.
+      - uses: cutenode/workistrator@main
+        with:
+          token: ${{ secrets.WORKISTRATOR_TOKEN }}
+          repositories: |
+            bnb/workistratorchild
+          # inputs.dry-run is null on push, so this renders 'false' there.
+          dry-run: ${{ inputs.dry-run || false }}
